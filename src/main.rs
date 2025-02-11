@@ -35,7 +35,7 @@ fn main() {
     let mut sm = SystemManager::new(8);
 
     sm.add(0, PhysicsManager);
-    sm.add(0, GameManager::default());
+    sm.add(1, GameManager::default());
 
     let mut rm = RendererManager::default();
 

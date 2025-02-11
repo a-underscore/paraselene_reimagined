@@ -29,9 +29,9 @@ use hex::{
         Validated, VulkanError, VulkanLibrary,
     },
     winit::{
-        window::Fullscreen,
         dpi::PhysicalSize,
         event::{Event, WindowEvent},
+        window::Fullscreen,
     },
     world::{entity_manager::EntityManager, system_manager::System, World},
     Context, Control, Id,
@@ -101,6 +101,12 @@ impl System for GameManager {
 
         match event {
             Event::WindowEvent {
+                event: WindowEvent::CloseRequested,
+                window_id,
+            } if window_id == context.read().window.id() => {
+                control.write().exit = true;
+            }
+            Event::WindowEvent {
                 event: WindowEvent::Resized(PhysicalSize { width, height }, ..),
                 window_id,
             } if window_id == context.read().window.id() => {
@@ -135,8 +141,11 @@ impl System for GameManager {
                 )
                 .unwrap_or_default();
                 let mut player_transform = player_transform.write();
+                let cross = Vector2::new(0.0, 1.0).perp(&pos);
+                let angle = Vector2::new(0.0, 1.0).angle(&pos);
+                let angle = if cross < 0.0 { angle } else { -angle };
 
-                player_transform.set_rotation(Vector2::new(0.0, 1.0).angle(&pos));
+                player_transform.set_rotation(angle);
             }
             _ => {}
         }
