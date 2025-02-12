@@ -1,4 +1,7 @@
-use crate::{tag::Tag, util};
+pub mod chunk_data;
+
+use crate::{state::State, tag::Tag, util};
+use chunk_data::ChunkData;
 use hex::{
     anyhow,
     assets::Shape,
@@ -37,38 +40,59 @@ use hex::{
     Context, Control, Id,
 };
 use hex_instance::components::Instance;
+use noise::NoiseFn;
 use std::sync::Arc;
 
-#[derive(Default)]
-pub struct ChunkManager;
+pub const MAX_MAP_SIZE: u32 = 10000;
+pub const TILE_SIZE: u32 = 32;
+pub const CHUNK_SIZE: u32 = 16;
+pub const CHUNK_DIST: f32 = 1.0;
+pub const MAX_CHUNK: u32 = MAX_MAP_SIZE / CHUNK_SIZE;
+pub const MIN_CHUNK: u32 = 2;
+pub const UNLOAD_BIAS: u32 = 8;
+pub const FRAME_LOAD_AMOUNT: usize = 1;
+
+pub struct ChunkManager {
+    pub state: Arc<RwLock<State>>,
+}
 
 impl ChunkManager {
-    /*
-    pub fn gen_chunks(&self, pos: Vector2, state: &mut State) {
-                let player = self.player.unwrap();
-                let camera_id = self.camera.unwrap();
-                let em = world.read().em.clone();
-                let em = em.read();
-                let player_transform = em.get_component::<Trans>(player).unwrap();
-                let camera = em.get_component::<Camera>(camera_id).unwrap();
-                let camera = camera.read();
-                let camera_transform = em.get_component::<Trans>(camera_id).unwrap();
-                let camera_transform = camera_transform.read();
-                let pos = util::mouse_pos_world(
-                    camera.dimensions(),
-                    camera_transform.scale(),
-                    self.dims,
-                    (self.mouse_position.x as f64, self.mouse_position.y as f64),
-                )
-                .unwrap_or_default();
-                let mut player_transform = player_transform.write();
-                let cross = Vector2::new(0.0, 1.0).perp(&pos);
-                let angle = Vector2::new(0.0, 1.0).angle(&pos);
-                let angle = if cross < 0.0 { angle } else { -angle };
+    pub fn new(state: Arc<RwLock<State>>) -> Self {
+        Self { state }
+    }
+}
 
-                player_transform.set_rotation(angle);
+impl ChunkManager {
+    pub fn gen_chunk(&self, pos: Vector2<f32>) -> anyhow::Result<ChunkData> {
+        let state = self.state.read();
+        let mut data = ChunkData::new(pos);
+
+        for i in 0..data.grid.len() {
+            for j in 0..data.grid[i].len() {
+                let x = pos.x as f64 * CHUNK_SIZE as f64 + i as f64;
+                let y = pos.y as f64 * CHUNK_SIZE as f64 + j as f64;
+                let val = state.perlin.get([x / 25.0, y / 25.0, 0.0]);
+                /*
+                let tiles: Vec<_> = state
+                    .tiles
+                    .values()
+                    .filter_map(|t| {
+                        t.check(&mut state.rng, val)
+                            .map(|(id, t)| (Some(id.clone()), t))
+                    })
+                    .collect();
+                let (id, _) = tiles
+                    .choose(&mut state.rng)
+                    .cloned()
+                    .unwrap_or((None, &state.space));
+
+                data.grid[i][j] = id.as_ref().cloned();
+                */
             }
-    */
+        }
+
+        Ok(data)
+    }
 }
 
 impl System for ChunkManager {
@@ -84,8 +108,7 @@ impl System for ChunkManager {
             Event::WindowEvent {
                 event: WindowEvent::RedrawRequested,
                 window_id,
-            } if window_id == context.read().window.id() => {
-            }
+            } if window_id == context.read().window.id() => {}
             _ => {}
         }
 

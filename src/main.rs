@@ -1,10 +1,11 @@
-pub mod game_manager;
 pub mod chunk_manager;
+pub mod game_manager;
+pub mod state;
 pub mod tag;
 pub mod util;
 
-use game_manager::GameManager;
 use chunk_manager::ChunkManager;
+use game_manager::GameManager;
 use hex::{
     nalgebra::*,
     vulkano::swapchain::{FullScreenExclusive, PresentMode},
@@ -15,7 +16,10 @@ use hex::{
 };
 use hex_instance::renderers::InstanceRenderer;
 use hex_physics::systems::PhysicsManager;
+use rand::prelude::*;
+use state::State;
 use std::sync::Arc;
+use tag::Tag;
 
 fn main() {
     let ev = EventLoop::new().unwrap();
@@ -33,11 +37,21 @@ fn main() {
     )
     .unwrap();
 
+    let state = State::new(rand::thread_rng().gen::<u32>());
     let em = EntityManager::new();
+
+    {
+        let mut em = em.write();
+        let s = em.add(true);
+
+        em.add_component(s, Tag::new("state"));
+        em.add_component(s, state.clone());
+    }
+
     let mut sm = SystemManager::new();
 
     sm.add(1, PhysicsManager);
-    sm.add(0, ChunkManager::default());
+    sm.add(0, ChunkManager::new(state));
     sm.add(0, GameManager::default());
 
     let mut rm = RendererManager::default();
