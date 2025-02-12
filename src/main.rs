@@ -1,8 +1,10 @@
 pub mod game_manager;
+pub mod chunk_manager;
 pub mod tag;
 pub mod util;
 
 use game_manager::GameManager;
+use chunk_manager::ChunkManager;
 use hex::{
     nalgebra::*,
     vulkano::swapchain::{FullScreenExclusive, PresentMode},
@@ -27,21 +29,22 @@ fn main() {
         &ev,
         wb,
         PresentMode::Immediate,
-        Vector4::new(0.0, 0.0, 0.0, 1.0),
+        Vector4::new(0.5, 0.5, 0.5, 1.0),
     )
     .unwrap();
 
     let em = EntityManager::new();
-    let mut sm = SystemManager::new(8);
+    let mut sm = SystemManager::new();
 
-    sm.add(0, PhysicsManager);
-    sm.add(1, GameManager::default());
+    sm.add(1, PhysicsManager);
+    sm.add(0, ChunkManager::default());
+    sm.add(0, GameManager::default());
 
     let mut rm = RendererManager::default();
 
     rm.add(InstanceRenderer);
 
-    let world = World::new(em, sm, rm);
+    let world = World::new(8, em, sm, rm);
 
     Context::init(context, ev, world).unwrap();
 }
