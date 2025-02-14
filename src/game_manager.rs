@@ -65,8 +65,8 @@ impl System for GameManager {
             player,
             Trans::new(Vector2::new(0.0, 0.0), 0.0, Vector2::new(1.0, 1.0)),
         );
-        let shape = Arc::new(Shape::rect(&*context.read(), Vector2::new(1.0, 1.0))?);
 
+        let shape = Arc::new(Shape::rect(&*context.read(), Vector2::new(1.0, 1.0))?);
         let instance = Instance::new(
             &*context.read(),
             shape.clone(),

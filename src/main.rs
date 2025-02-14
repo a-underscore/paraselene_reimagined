@@ -51,7 +51,7 @@ fn main() {
     let mut sm = SystemManager::new();
 
     sm.add(1, PhysicsManager);
-    sm.add(0, ChunkManager::new(state));
+    sm.add(0, ChunkManager::new(&context.read(), state).unwrap());
     sm.add(0, GameManager::default());
 
     let mut rm = RendererManager::default();
