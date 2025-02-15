@@ -19,7 +19,6 @@ use std::{
 };
 
 pub const PLAYER_ACCEL: f32 = 0.01;
-pub const DECCEL_MULTIPLIER: f32 = 2.0;
 pub const PLAYER_MAX_SPEED: f32 = 0.5;
 
 #[derive(Default)]
@@ -200,11 +199,14 @@ impl System for GameManager {
                 } else {
                     player.velocity
                         - util::lerp_vec2(player.velocity, Vector2::default(), delta.as_secs_f32())
-                            * PLAYER_ACCEL
-                            * DECCEL_MULTIPLIER
+                            * PLAYER_ACCEL * 5.0
                 };
                 player.velocity = if f.magnitude() != 0.0 {
-                    f.normalize() * f.magnitude().min(PLAYER_MAX_SPEED)
+                    let f = f.normalize() * f.magnitude().min(PLAYER_MAX_SPEED);
+
+                    println!("{} {}", f.x, PLAYER_MAX_SPEED);
+
+                    f
                 } else {
                     Vector2::default()
                 };
@@ -213,6 +215,7 @@ impl System for GameManager {
                     player_transform.position() + player.velocity * delta.as_secs_f32(),
                 );
 
+                println!("{}", player_transform.position());
                 camera_transform.set_position(player_transform.position());
             }
             _ => {}
