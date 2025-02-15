@@ -80,7 +80,7 @@ impl System for GameManager {
         let camera = em.add(true);
 
         em.add_component(camera, Tag::new("camera"));
-        em.add_component(camera, Camera::new(Vector2::new(10.0, 10.0), 1000));
+        em.add_component(camera, Camera::new(Vector2::new(25.0, 25.0), 1000));
         em.add_component(
             camera,
             Trans::new(Vector2::new(0.0, 0.0), 0.0, Vector2::new(1.0, 1.0)),

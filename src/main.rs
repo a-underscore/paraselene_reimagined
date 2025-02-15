@@ -3,6 +3,7 @@ pub mod game_manager;
 pub mod state;
 pub mod tag;
 pub mod util;
+pub mod game_ui_manager;
 
 use chunk_manager::ChunkManager;
 use game_manager::GameManager;
@@ -34,7 +35,7 @@ fn main() {
         &ev,
         wb,
         PresentMode::Immediate,
-        ThreadPool::new(num_cpus::get() / 2),
+        ThreadPool::new(num_cpus::get()),
         Vector4::new(0.5, 0.5, 0.5, 1.0),
     )
     .unwrap();
