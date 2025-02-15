@@ -3,7 +3,7 @@ use hex::{
     anyhow,
     assets::Shape,
     components::{Camera, Trans},
-    nalgebra::{Vector2, Vector4},
+    nalgebra::{Matrix2, Matrix3, Vector2, Vector4},
     parking_lot::RwLock,
     winit::{
         dpi::PhysicalSize,
@@ -13,9 +13,13 @@ use hex::{
     Context, Control, Id,
 };
 use hex_instance::components::Instance;
-use std::sync::Arc;
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
-pub const PLAYER_MOVE_SPEED: f32 = 10.0;
+pub const PLAYER_MOVE_SPEED: f32 = 0.01;
+pub const PLAYER_MAX_SPEED: f32 = 10.0;
 
 #[derive(Default)]
 pub struct ButtonStates {
@@ -36,36 +40,49 @@ impl Player {
         let mut force = Vector2::default();
 
         if self.states.forward {
-            force.y += PLAYER_MOVE_SPEED;
+            force.y -= 1.0;
         }
 
         if self.states.backward {
-            force.y -= PLAYER_MOVE_SPEED;
+            force.y += 1.0;
         }
 
         if self.states.left {
-            force.x -= PLAYER_MOVE_SPEED;
+            force.x += 1.0;
         }
 
         if self.states.right {
-            force.x += PLAYER_MOVE_SPEED;
+            force.x -= 1.0;
         }
 
         if force.magnitude() > 0.0 {
-            force = force.normalize() * PLAYER_MOVE_SPEED;
+            force = force.normalize();
         }
 
         force
     }
 }
 
-#[derive(Default)]
 pub struct GameManager {
     pub player: Option<Id>,
     pub camera: Option<Id>,
     pub last_fs: bool,
     pub mouse_position: Vector2<f32>,
     pub dims: (u32, u32),
+    pub last_frame: Instant,
+}
+
+impl GameManager {
+    pub fn new() -> Self {
+        Self {
+            player: Default::default(),
+            camera: Default::default(),
+            last_fs: Default::default(),
+            mouse_position: Default::default(),
+            dims: Default::default(),
+            last_frame: Instant::now(),
+        }
+    }
 }
 
 impl System for GameManager {
@@ -101,7 +118,7 @@ impl System for GameManager {
         let camera = em.add(true);
 
         em.add_component(camera, Tag::new("camera"));
-        em.add_component(camera, Camera::new(Vector2::new(25.0, 25.0), 1000));
+        em.add_component(camera, Camera::new(Vector2::new(50.0, 50.0), 1000));
         em.add_component(
             camera,
             Trans::new(Vector2::new(0.0, 0.0), 0.0, Vector2::new(1.0, 1.0)),
@@ -165,17 +182,36 @@ impl System for GameManager {
                 let cross = Vector2::new(0.0, 1.0).perp(&pos);
                 let angle = Vector2::new(0.0, 1.0).angle(&pos);
                 let angle = if cross < 0.0 { angle } else { -angle };
+                let now = Instant::now();
+                let delta = now.duration_since(self.last_frame);
 
                 player_transform.set_rotation(angle);
 
                 let player = em.get_component::<Player>(player).unwrap();
                 let player = &mut *player.write();
+                let f = player.force();
+                let f = if f.magnitude() != 0.0 {
+                    player.velocity
+                        + (Matrix3::new_rotation(player_transform.rotation())
+                            * util::lerp_vec2(f, Vector2::default(), delta.as_secs_f32()).push(1.0))
+                        .xy()
+                            * PLAYER_MOVE_SPEED
+                } else {
+                    player.velocity
+                        - util::lerp_vec2(player.velocity, Vector2::default(), delta.as_secs_f32())
+                            * PLAYER_MOVE_SPEED
+                };
+                player.velocity = if f.magnitude() != 0.0 {
+                    f.normalize() * f.magnitude().min(PLAYER_MAX_SPEED)
+                } else {
+                    Vector2::default()
+                };
 
-                player.velocity += player.force();
+                player_transform.set_position(
+                    player_transform.position() + player.velocity * delta.as_secs_f32(),
+                );
 
                 println!("{}", player_transform.position());
-
-                player_transform.set_position(player_transform.position() + player.velocity);
                 camera_transform.set_position(player_transform.position());
             }
             _ => {}

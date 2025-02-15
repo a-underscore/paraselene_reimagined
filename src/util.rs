@@ -1,8 +1,4 @@
-use hex::{
-    assets::*,
-    nalgebra::*,
-    vulkano::image::sampler::Sampler, *,
-};
+use hex::{assets::*, nalgebra::*, vulkano::image::sampler::Sampler, *};
 use image::{ImageFormat, ImageReader};
 
 pub fn load_texture(context: &Context, path: &str) -> anyhow::Result<Texture> {
@@ -31,4 +27,12 @@ pub fn mouse_pos_world(
         camera_scale.x * ((x / width as f64) as f32 * dims.x - dims.x / 2.0),
         -camera_scale.y * ((y / height as f64) as f32 * dims.y - dims.y / 2.0),
     ))
+}
+
+pub fn lerp(f1: f32, f2: f32, t: f32) -> f32 {
+    f1 * t + f2 * t
+}
+
+pub fn lerp_vec2(v1: Vector2<f32>, v2: Vector2<f32>, t: f32) -> Vector2<f32> {
+    Vector2::new(lerp(v1.x, v2.x, t), lerp(v1.y, v2.y, t))
 }

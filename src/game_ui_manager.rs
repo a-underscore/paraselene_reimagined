@@ -30,7 +30,6 @@ pub type Binds = HashMap<
 
 pub struct GameUiManager {
     player: Option<Id>,
-    camera: Option<Id>,
     kp_cb: Binds,
 }
 
@@ -38,7 +37,6 @@ impl GameUiManager {
     pub fn new() -> anyhow::Result<Self> {
         Ok(Self {
             player: Default::default(),
-            camera: Default::default(),
             kp_cb: Default::default(),
         })
     }

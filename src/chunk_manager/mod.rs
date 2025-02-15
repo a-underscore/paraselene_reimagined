@@ -8,7 +8,6 @@ use hex::{
     components::{Camera, Trans},
     nalgebra::Vector2,
     parking_lot::RwLock,
-    vulkano::sync::{GpuFuture},
     winit::event::{Event, WindowEvent},
     world::{system_manager::System, World},
     Context, Control,

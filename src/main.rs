@@ -7,6 +7,7 @@ pub mod util;
 
 use chunk_manager::ChunkManager;
 use game_manager::GameManager;
+use game_ui_manager::GameUiManager;
 use hex::{
     nalgebra::*,
     threadpool::ThreadPool,
@@ -53,7 +54,8 @@ fn main() {
     let mut sm = SystemManager::new();
 
     sm.add(1, PhysicsManager);
-    sm.add(0, GameManager::default());
+    sm.add(0, GameManager::new());
+    sm.add(0, GameUiManager::new().unwrap());
     sm.add(0, ChunkManager::new(&context.read(), state).unwrap());
 
     let mut rm = RendererManager::default();
