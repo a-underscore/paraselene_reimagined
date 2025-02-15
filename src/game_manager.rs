@@ -3,7 +3,7 @@ use hex::{
     anyhow,
     assets::Shape,
     components::{Camera, Trans},
-    nalgebra::{Matrix2, Matrix3, Vector2, Vector4},
+    nalgebra::{Matrix3, Vector2, Vector4},
     parking_lot::RwLock,
     winit::{
         dpi::PhysicalSize,
@@ -13,10 +13,7 @@ use hex::{
     Context, Control, Id,
 };
 use hex_instance::components::Instance;
-use std::{
-    sync::Arc,
-    time::{Duration, Instant},
-};
+use std::{sync::Arc, time::Instant};
 
 pub const PLAYER_ACCEL: f32 = 0.01;
 pub const DECCEL_MULTIPLIER: f32 = 2.0;
@@ -71,6 +68,12 @@ pub struct GameManager {
     pub mouse_position: Vector2<f32>,
     pub dims: (u32, u32),
     pub last_frame: Instant,
+}
+
+impl Default for GameManager {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl GameManager {

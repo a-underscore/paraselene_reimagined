@@ -86,7 +86,7 @@ impl ChunkManager {
         let mut grid = vec![vec![None; CHUNK_SIZE as usize]; CHUNK_SIZE as usize];
         let mut state = state.write();
 
-        for i in 0..(CHUNK_SIZE as usize) {
+        for (i, grid) in grid.iter_mut().enumerate().take(CHUNK_SIZE as usize) {
             for j in 0..(CHUNK_SIZE as usize) {
                 let x = pos.x as f64 * CHUNK_SIZE as f64 + i as f64;
                 let y = pos.y as f64 * CHUNK_SIZE as f64 + j as f64;
@@ -103,7 +103,7 @@ impl ChunkManager {
                     .cloned()
                     .unwrap_or((None, space.clone()));
 
-                grid[i][j] = id.as_ref().cloned();
+                grid[j] = id.as_ref().cloned();
             }
         }
 
