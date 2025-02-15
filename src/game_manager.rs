@@ -80,7 +80,7 @@ impl System for GameManager {
         let camera = em.add(true);
 
         em.add_component(camera, Tag::new("camera"));
-        em.add_component(camera, Camera::new(Vector2::new(10.0, 10.0), 1000));
+        em.add_component(camera, Camera::new(Vector2::new(25.0, 25.0), 1000));
         em.add_component(
             camera,
             Trans::new(Vector2::new(0.0, 0.0), 0.0, Vector2::new(1.0, 1.0)),
@@ -128,11 +128,10 @@ impl System for GameManager {
                 let camera_id = self.camera.unwrap();
                 let em = world.read().em.clone();
                 let em = em.read();
-                let player_transform = em.get_component::<Trans>(player).unwrap();
                 let camera = em.get_component::<Camera>(camera_id).unwrap();
                 let camera = camera.read();
                 let camera_transform = em.get_component::<Trans>(camera_id).unwrap();
-                let camera_transform = camera_transform.read();
+                let mut camera_transform = camera_transform.write();
                 let pos = util::mouse_pos_world(
                     camera.dimensions(),
                     camera_transform.scale(),
@@ -140,12 +139,19 @@ impl System for GameManager {
                     (self.mouse_position.x as f64, self.mouse_position.y as f64),
                 )
                 .unwrap_or_default();
+                let player_transform = em.get_component::<Trans>(player).unwrap();
                 let mut player_transform = player_transform.write();
+
                 let cross = Vector2::new(0.0, 1.0).perp(&pos);
                 let angle = Vector2::new(0.0, 1.0).angle(&pos);
                 let angle = if cross < 0.0 { angle } else { -angle };
 
                 player_transform.set_rotation(angle);
+
+                let position = player_transform.position();
+
+                //player_transform.set_position(Vector2::new(position.x + 1.0, position.y));
+                camera_transform.set_position(player_transform.position());
             }
             _ => {}
         }

@@ -8,6 +8,7 @@ use chunk_manager::ChunkManager;
 use game_manager::GameManager;
 use hex::{
     nalgebra::*,
+    threadpool::ThreadPool,
     vulkano::swapchain::{FullScreenExclusive, PresentMode},
     winit::window::Fullscreen,
     winit::{event_loop::EventLoop, window::WindowBuilder},
@@ -33,6 +34,7 @@ fn main() {
         &ev,
         wb,
         PresentMode::Immediate,
+        ThreadPool::new(num_cpus::get() / 4),
         Vector4::new(0.5, 0.5, 0.5, 1.0),
     )
     .unwrap();
@@ -51,8 +53,8 @@ fn main() {
     let mut sm = SystemManager::new();
 
     sm.add(1, PhysicsManager);
-    sm.add(0, ChunkManager::new(&context.read(), state).unwrap());
     sm.add(0, GameManager::default());
+    sm.add(0, ChunkManager::new(&context.read(), state).unwrap());
 
     let mut rm = RendererManager::default();
 

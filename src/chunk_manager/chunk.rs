@@ -1,6 +1,13 @@
 use super::CHUNK_SIZE;
 use crate::util;
-use hex::{anyhow, assets::Texture, nalgebra::Vector2, parking_lot::RwLock, Context};
+use hex::{
+    anyhow,
+    assets::{Shape, Texture},
+    nalgebra::{Vector2, Vector4},
+    parking_lot::RwLock,
+    Context,
+};
+use hex_instance::components::Instance;
 use once_cell::sync::Lazy;
 use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
@@ -13,7 +20,6 @@ pub const METAL: &str = "metal";
 
 #[derive(Serialize, Deserialize)]
 pub struct ChunkData {
-    pub id: String,
     pub position: [f32; 2],
     pub grid: Vec<Vec<Option<String>>>,
 }
@@ -22,14 +28,14 @@ pub struct Tile {
     pub max: f64,
     pub min: f64,
     pub rand: f64,
-    pub texture: Texture,
+    pub instance: Arc<RwLock<Instance>>,
     pub id: String,
 }
 
 impl Tile {
-    pub fn check(&self, rng: &mut StdRng, value: f64) -> Option<(&String, &Texture)> {
+    pub fn check(&self, rng: &mut StdRng, value: f64) -> Option<(&String, Arc<RwLock<Instance>>)> {
         if rng.gen_bool(self.rand) && self.max >= value && self.min <= value {
-            Some((&self.id, &self.texture))
+            Some((&self.id, self.instance.clone()))
         } else {
             None
         }
@@ -40,7 +46,7 @@ impl Tile {
             max: 1.0,
             min: 0.25,
             rand: 1.0,
-            texture: util::load_texture(&context, &Self::file_map(ASTEROID_1).unwrap())?,
+            instance: Self::new_instance(context, ASTEROID_1)?,
             id: ASTEROID_1.to_string(),
         }))
     }
@@ -50,7 +56,7 @@ impl Tile {
             max: 1.0,
             min: 0.25,
             rand: 1.0,
-            texture: util::load_texture(&context, &Self::file_map(ASTEROID_2).unwrap())?,
+            instance: Self::new_instance(context, ASTEROID_2)?,
             id: ASTEROID_2.to_string(),
         }))
     }
@@ -60,16 +66,23 @@ impl Tile {
             max: 1.0,
             min: 2.0 / 3.0,
             rand: 2.0 / 3.0,
-            texture: util::load_texture(&context, &Self::file_map(METAL).unwrap())?,
+            instance: Self::new_instance(context, METAL)?,
             id: METAL.to_string(),
         }))
     }
 
-    pub fn space(context: &Context) -> anyhow::Result<Arc<Texture>> {
-        Ok(Arc::new(util::load_texture(
-            &context,
-            &Self::file_map(SPACE).unwrap(),
-        )?))
+    pub fn space(context: &Context) -> anyhow::Result<Arc<RwLock<Instance>>> {
+        Self::new_instance(context, SPACE)
+    }
+
+    pub fn new_instance(context: &Context, id: &str) -> anyhow::Result<Arc<RwLock<Instance>>> {
+        Instance::new(
+            context,
+            Arc::new(Shape::rect(context, Vector2::new(1.0, 1.0))?),
+            Arc::new(util::load_texture(context, &Self::file_map(id).unwrap())?),
+            Vector4::new(1.0, 1.0, 1.0, 1.0),
+            1,
+        )
     }
 
     pub fn file_map(id: &str) -> Option<String> {
@@ -92,5 +105,28 @@ pub struct Chunk {
 impl Chunk {
     pub fn new(position: Vector2<f32>, grid: Vec<Vec<Option<Arc<Tile>>>>) -> anyhow::Result<Self> {
         Ok(Self { position, grid })
+    }
+
+    pub fn load(chunk_data: ChunkData, tiles: HashMap<String, Arc<Tile>>) -> Self {
+        Self {
+            position: chunk_data.position.into(),
+            grid: chunk_data
+                .grid
+                .into_iter()
+                .map(|x| {
+                    x.into_iter()
+                        .map(|y| y.and_then(|id| tiles.get(&id).cloned()))
+                        .collect()
+                })
+                .collect(),
+        }
+    }
+}
+
+pub struct ChunkType;
+
+impl ChunkType {
+    pub fn new() -> Arc<RwLock<ChunkType>> {
+        Arc::new(RwLock::new(ChunkType))
     }
 }
