@@ -18,7 +18,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-pub const PLAYER_MOVE_SPEED: f32 = 0.01;
+pub const PLAYER_ACCEL: f32 = 0.05;
 pub const PLAYER_MAX_SPEED: f32 = 10.0;
 
 #[derive(Default)]
@@ -195,11 +195,11 @@ impl System for GameManager {
                         + (Matrix3::new_rotation(player_transform.rotation())
                             * util::lerp_vec2(f, Vector2::default(), delta.as_secs_f32()).push(1.0))
                         .xy()
-                            * PLAYER_MOVE_SPEED
+                            * PLAYER_ACCEL
                 } else {
                     player.velocity
                         - util::lerp_vec2(player.velocity, Vector2::default(), delta.as_secs_f32())
-                            * PLAYER_MOVE_SPEED
+                            * PLAYER_ACCEL
                 };
                 player.velocity = if f.magnitude() != 0.0 {
                     f.normalize() * f.magnitude().min(PLAYER_MAX_SPEED)
