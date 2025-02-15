@@ -179,7 +179,7 @@ impl ChunkManager {
                     e,
                     chunk.grid[i][j]
                         .as_ref()
-                        .map(|c| { c.instance.clone() })
+                        .map(|c| c.instance.clone())
                         .unwrap_or(space.clone()),
                 );
                 em.add_component(
@@ -263,9 +263,9 @@ impl System for ChunkManager {
                         let tiles = self.tiles.clone();
                         let space = self.space.clone();
 
-                            pool.execute(move || {
-                                Self::load_chunk(world, state, space, tiles, chunk).unwrap();
-                            });
+                        pool.execute(move || {
+                            Self::load_chunk(world, state, space, tiles, chunk).unwrap();
+                        });
                     }
                 }
             }

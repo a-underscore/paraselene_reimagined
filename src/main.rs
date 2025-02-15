@@ -60,7 +60,7 @@ fn main() {
 
     rm.add(InstanceRenderer);
 
-    let world = World::new(8, em, sm, rm);
+    let world = World::new(em, sm, rm);
 
     Context::init(context, ev, world).unwrap();
 }
