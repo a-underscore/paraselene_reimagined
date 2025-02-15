@@ -39,6 +39,50 @@ use hex::{
 use hex_instance::components::Instance;
 use std::sync::Arc;
 
+pub const PLAYER_MOVE_SPEED: f32 = 10.0;
+
+#[derive(Default)]
+pub struct ButtonStates {
+    pub forward: bool,
+    pub backward: bool,
+    pub left: bool,
+    pub right: bool,
+}
+
+#[derive(Default)]
+pub struct Player {
+    pub states: ButtonStates,
+    pub velocity: Vector2<f32>,
+}
+
+impl Player {
+    pub fn force(&self) -> Vector2<f32> {
+        let mut force = Vector2::default();
+
+        if self.states.forward {
+            force.y = force.y + PLAYER_MOVE_SPEED;
+        }
+
+        if self.states.backward {
+            force.y = force.y - PLAYER_MOVE_SPEED;
+        }
+
+        if self.states.left {
+            force.x = force.x - PLAYER_MOVE_SPEED;
+        }
+
+        if self.states.right {
+            force.x = force.x + PLAYER_MOVE_SPEED;
+        }
+
+        if force.magnitude() > 0.0 {
+            force = force.normalize() * PLAYER_MOVE_SPEED;
+        }
+
+        force
+    }
+}
+
 #[derive(Default)]
 pub struct GameManager {
     pub player: Option<Id>,
@@ -60,6 +104,7 @@ impl System for GameManager {
 
         self.player = Some(player);
 
+        em.add_component(player, Arc::new(RwLock::new(Player::default())));
         em.add_component(player, Tag::new("player"));
         em.add_component(
             player,
@@ -140,16 +185,21 @@ impl System for GameManager {
                 )
                 .unwrap_or_default();
                 let player_transform = em.get_component::<Trans>(player).unwrap();
-                let mut player_transform = player_transform.write();
+                let player_transform = &mut *player_transform.write();
                 let cross = Vector2::new(0.0, 1.0).perp(&pos);
                 let angle = Vector2::new(0.0, 1.0).angle(&pos);
                 let angle = if cross < 0.0 { angle } else { -angle };
 
                 player_transform.set_rotation(angle);
 
-                let position = player_transform.position();
+                let player = em.get_component::<Player>(player).unwrap();
+                let player = &mut *player.write();
 
-                player_transform.set_position(Vector2::new(position.x + 1.0, position.y));
+                player.velocity += player.force();
+
+                println!("{}", player_transform.position());
+
+                player_transform.set_position(player_transform.position() + player.velocity);
                 camera_transform.set_position(player_transform.position());
             }
             _ => {}

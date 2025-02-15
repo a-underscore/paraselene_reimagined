@@ -1,9 +1,9 @@
 pub mod chunk_manager;
 pub mod game_manager;
+pub mod game_ui_manager;
 pub mod state;
 pub mod tag;
 pub mod util;
-//pub mod game_ui_manager;
 
 use chunk_manager::ChunkManager;
 use game_manager::GameManager;
