@@ -150,7 +150,7 @@ impl System for GameManager {
 
                 let position = player_transform.position();
 
-                //player_transform.set_position(Vector2::new(position.x + 1.0, position.y));
+                player_transform.set_position(Vector2::new(position.x + 1.0, position.y));
                 camera_transform.set_position(player_transform.position());
             }
             _ => {}

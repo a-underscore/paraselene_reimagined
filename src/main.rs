@@ -34,7 +34,7 @@ fn main() {
         &ev,
         wb,
         PresentMode::Immediate,
-        ThreadPool::new(num_cpus::get() / 4),
+        ThreadPool::new(num_cpus::get() / 2),
         Vector4::new(0.5, 0.5, 0.5, 1.0),
     )
     .unwrap();
