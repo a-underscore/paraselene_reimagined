@@ -1,36 +1,48 @@
 pub mod input;
-pub mod main_menu;
 
 pub use input::Input;
-pub use main_menu::MainMenu;
 
 use crate::{
-    player::{
-        player_manager::CAM_DIMS,
-        state::{GAME_MODE, MENU_MODE},
-        Player, State,
-    },
     Tag,
 };
 use hex::{
     anyhow,
-    components::{Camera, Transform},
-    ecs::{
-        ev::{Control, Ev},
-        system_manager::System,
-        ComponentManager, Context, EntityManager, Id,
-    },
-    glium::glutin::{
-        dpi::PhysicalPosition,
-        event::{
-            ElementState, Event, KeyboardInput, MouseButton, MouseScrollDelta, VirtualKeyCode,
-            WindowEvent,
+    assets::{Shape, Texture},
+    components::{Camera, Trans},
+    nalgebra::{Vector2, Vector4},
+    parking_lot::RwLock,
+    vulkano::{
+        command_buffer::{
+            allocator::StandardCommandBufferAllocator, AutoCommandBufferBuilder,
+            CommandBufferUsage, RenderPassBeginInfo,
         },
-        event_loop::ControlFlow,
+        descriptor_set::allocator::StandardDescriptorSetAllocator,
+        device::{
+            physical::PhysicalDeviceType, Device, DeviceCreateInfo, DeviceExtensions, Queue,
+            QueueCreateInfo, QueueFlags,
+        },
+        format::Format,
+        image::{view::ImageView, Image, ImageCreateInfo, ImageType, ImageUsage},
+        instance::{self, InstanceCreateFlags, InstanceCreateInfo},
+        memory::allocator::{AllocationCreateInfo, StandardMemoryAllocator},
+        pipeline::graphics::viewport::Viewport,
+        render_pass::{Framebuffer, FramebufferCreateInfo, RenderPass},
+        swapchain::{
+            acquire_next_image, PresentMode, Surface, Swapchain, SwapchainCreateInfo,
+            SwapchainPresentInfo,
+        },
+        sync::{self, GpuFuture},
+        Validated, VulkanError, VulkanLibrary,
     },
-    math::Vec2d,
+    winit::{
+        dpi::PhysicalSize,
+        event::{Event, WindowEvent},
+        window::Fullscreen,
+    },
+    world::{entity_manager::EntityManager, system_manager::System, World},
+    Context, Control, Id,
 };
-use std::{cell::OnceCell, collections::HashMap, f32::consts::PI};
+use std::{cell::OnceCell, sync::Arc, collections::HashMap, f32::consts::PI};
 
 pub const ZOOM: f32 = 5.0;
 
@@ -39,8 +51,9 @@ pub type Binds = HashMap<
     Box<
         dyn Fn(
             ElementState,
-            &mut Context,
-            (&mut EntityManager, &mut ComponentManager),
+            Arc<RwLock<Context>>,
+            Arc<RwLock<World>>
+            ,
         ) -> anyhow::Result<()>,
     >,
 >;
