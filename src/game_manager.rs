@@ -63,7 +63,7 @@ impl System for GameManager {
         em.add_component(player, Tag::new("player"));
         em.add_component(
             player,
-            Trans::new(Vector2::new(0.0, 0.0), 0.0, Vector2::new(1.0, 1.0)),
+            Trans::new(Vector2::new(0.0, 100.0), 0.0, Vector2::new(1.0, 1.0)),
         );
 
         let shape = Arc::new(Shape::rect(&*context.read(), Vector2::new(1.0, 1.0))?);
@@ -80,7 +80,7 @@ impl System for GameManager {
         let camera = em.add(true);
 
         em.add_component(camera, Tag::new("camera"));
-        em.add_component(camera, Camera::new(Vector2::new(25.0, 25.0), 1000));
+        em.add_component(camera, Camera::new(Vector2::new(10.0, 10.0), 1000));
         em.add_component(
             camera,
             Trans::new(Vector2::new(0.0, 0.0), 0.0, Vector2::new(1.0, 1.0)),
@@ -141,7 +141,6 @@ impl System for GameManager {
                 .unwrap_or_default();
                 let player_transform = em.get_component::<Trans>(player).unwrap();
                 let mut player_transform = player_transform.write();
-
                 let cross = Vector2::new(0.0, 1.0).perp(&pos);
                 let angle = Vector2::new(0.0, 1.0).angle(&pos);
                 let angle = if cross < 0.0 { angle } else { -angle };

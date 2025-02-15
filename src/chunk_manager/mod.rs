@@ -53,7 +53,7 @@ use std::{
 pub const MAX_MAP_SIZE: u32 = 10000;
 pub const TILE_SIZE: u32 = 32;
 pub const CHUNK_SIZE: u32 = 16;
-pub const CHUNK_DIST: f32 = 2.0;
+pub const CHUNK_DIST: f32 = 1.0;
 pub const MAX_CHUNK: u32 = MAX_MAP_SIZE / CHUNK_SIZE;
 pub const MIN_CHUNK: u32 = 2;
 pub const UNLOAD_BIAS: u32 = 8;
@@ -186,8 +186,8 @@ impl ChunkManager {
                     e,
                     Trans::new(
                         Vector2::new(
-                            (CHUNK_SIZE * x) as f32 + i as f32,
-                            (CHUNK_SIZE * y) as f32 + j as f32,
+                            (CHUNK_SIZE * x as u32) as f32 + i as f32,
+                            (CHUNK_SIZE * y as u32) as f32 + j as f32,
                         ),
                         0.0,
                         Vector2::new(1.0, 1.0),
@@ -263,9 +263,9 @@ impl System for ChunkManager {
                         let tiles = self.tiles.clone();
                         let space = self.space.clone();
 
-                        pool.execute(move || {
-                            Self::load_chunk(world, state, space, tiles, chunk).unwrap();
-                        });
+                            pool.execute(move || {
+                                Self::load_chunk(world, state, space, tiles, chunk).unwrap();
+                            });
                     }
                 }
             }
