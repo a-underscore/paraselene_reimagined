@@ -5,35 +5,11 @@ use hex::{
     components::{Camera, Trans},
     nalgebra::{Vector2, Vector4},
     parking_lot::RwLock,
-    vulkano::{
-        command_buffer::{
-            allocator::StandardCommandBufferAllocator, AutoCommandBufferBuilder,
-            CommandBufferUsage, RenderPassBeginInfo,
-        },
-        descriptor_set::allocator::StandardDescriptorSetAllocator,
-        device::{
-            physical::PhysicalDeviceType, Device, DeviceCreateInfo, DeviceExtensions, Queue,
-            QueueCreateInfo, QueueFlags,
-        },
-        format::Format,
-        image::{view::ImageView, Image, ImageCreateInfo, ImageType, ImageUsage},
-        instance::{self, InstanceCreateFlags, InstanceCreateInfo},
-        memory::allocator::{AllocationCreateInfo, StandardMemoryAllocator},
-        pipeline::graphics::viewport::Viewport,
-        render_pass::{Framebuffer, FramebufferCreateInfo, RenderPass},
-        swapchain::{
-            acquire_next_image, PresentMode, Surface, Swapchain, SwapchainCreateInfo,
-            SwapchainPresentInfo,
-        },
-        sync::{self, GpuFuture},
-        Validated, VulkanError, VulkanLibrary,
-    },
     winit::{
         dpi::PhysicalSize,
         event::{Event, WindowEvent},
-        window::Fullscreen,
     },
-    world::{entity_manager::EntityManager, system_manager::System, World},
+    world::{system_manager::System, World},
     Context, Control, Id,
 };
 use hex_instance::components::Instance;
@@ -60,19 +36,19 @@ impl Player {
         let mut force = Vector2::default();
 
         if self.states.forward {
-            force.y = force.y + PLAYER_MOVE_SPEED;
+            force.y += PLAYER_MOVE_SPEED;
         }
 
         if self.states.backward {
-            force.y = force.y - PLAYER_MOVE_SPEED;
+            force.y -= PLAYER_MOVE_SPEED;
         }
 
         if self.states.left {
-            force.x = force.x - PLAYER_MOVE_SPEED;
+            force.x -= PLAYER_MOVE_SPEED;
         }
 
         if self.states.right {
-            force.x = force.x + PLAYER_MOVE_SPEED;
+            force.x += PLAYER_MOVE_SPEED;
         }
 
         if force.magnitude() > 0.0 {
@@ -111,11 +87,11 @@ impl System for GameManager {
             Trans::new(Vector2::new(0.0, 100.0), 0.0, Vector2::new(1.0, 1.0)),
         );
 
-        let shape = Arc::new(Shape::rect(&*context.read(), Vector2::new(1.0, 1.0))?);
+        let shape = Arc::new(Shape::rect(&context.read(), Vector2::new(1.0, 1.0))?);
         let instance = Instance::new(
-            &*context.read(),
+            &context.read(),
             shape.clone(),
-            Arc::new(util::load_texture(&*context.read(), "art/player.png")?),
+            Arc::new(util::load_texture(&context.read(), "art/player.png")?),
             Vector4::new(1.0, 1.0, 0.0, 1.0),
             0,
         )?;

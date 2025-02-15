@@ -2,43 +2,16 @@ pub mod chunk;
 
 pub use chunk::{Chunk, ChunkData, ChunkType, Tile, ASTEROID_1, ASTEROID_2, METAL, SPACE};
 
-use crate::{state::State, tag::Tag, util};
+use crate::{state::State, tag::Tag};
 use hex::{
     anyhow,
-    assets::{Shape, Texture},
     components::{Camera, Trans},
-    nalgebra::{Vector2, Vector4},
+    nalgebra::Vector2,
     parking_lot::RwLock,
-    vulkano::{
-        command_buffer::{
-            allocator::StandardCommandBufferAllocator, AutoCommandBufferBuilder,
-            CommandBufferUsage, RenderPassBeginInfo,
-        },
-        descriptor_set::allocator::StandardDescriptorSetAllocator,
-        device::{
-            physical::PhysicalDeviceType, Device, DeviceCreateInfo, DeviceExtensions, Queue,
-            QueueCreateInfo, QueueFlags,
-        },
-        format::Format,
-        image::{view::ImageView, Image, ImageCreateInfo, ImageType, ImageUsage},
-        instance::{self, InstanceCreateFlags, InstanceCreateInfo},
-        memory::allocator::{AllocationCreateInfo, StandardMemoryAllocator},
-        pipeline::graphics::viewport::Viewport,
-        render_pass::{Framebuffer, FramebufferCreateInfo, RenderPass},
-        swapchain::{
-            acquire_next_image, PresentMode, Surface, Swapchain, SwapchainCreateInfo,
-            SwapchainPresentInfo,
-        },
-        sync::{self, GpuFuture},
-        Validated, VulkanError, VulkanLibrary,
-    },
-    winit::{
-        dpi::PhysicalSize,
-        event::{Event, WindowEvent},
-        window::Fullscreen,
-    },
-    world::{entity_manager::EntityManager, system_manager::System, World},
-    Context, Control, Id,
+    vulkano::sync::{GpuFuture},
+    winit::event::{Event, WindowEvent},
+    world::{system_manager::System, World},
+    Context, Control,
 };
 use hex_instance::components::Instance;
 use noise::NoiseFn;
@@ -184,8 +157,8 @@ impl ChunkManager {
         for i in 0..(CHUNK_SIZE as usize) {
             for j in 0..(CHUNK_SIZE as usize) {
                 let position = Vector2::new(
-                    (CHUNK_SIZE * x as u32) as f32 + i as f32,
-                    (CHUNK_SIZE * y as u32) as f32 + j as f32,
+                    (CHUNK_SIZE * x) as f32 + i as f32,
+                    (CHUNK_SIZE * y) as f32 + j as f32,
                 );
 
                 if !loaded

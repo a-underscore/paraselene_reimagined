@@ -1,24 +1,9 @@
 use hex::{
     assets::*,
-    components::{camera::*, *},
     nalgebra::*,
-    parking_lot::RwLock,
-    renderers::*,
-    vulkano::image::sampler::Sampler,
-    winit::{event_loop::EventLoop, window::WindowBuilder},
-    world::{
-        entity_manager::{component_manager::*, *},
-        renderer_manager::*,
-        system_manager::{System, *},
-    },
-    Control, *,
+    vulkano::image::sampler::Sampler, *,
 };
 use image::{ImageFormat, ImageReader};
-use std::{
-    fs::File,
-    io::{Cursor, Read},
-    path::{Path, PathBuf},
-};
 
 pub fn load_texture(context: &Context, path: &str) -> anyhow::Result<Texture> {
     let mut img = ImageReader::open(path)?;

@@ -1,4 +1,3 @@
-use crate::chunk_manager::Chunk;
 use hex::parking_lot::RwLock;
 use noise::Perlin;
 use rand::prelude::*;

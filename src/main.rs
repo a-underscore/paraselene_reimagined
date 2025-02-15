@@ -10,8 +10,7 @@ use game_manager::GameManager;
 use hex::{
     nalgebra::*,
     threadpool::ThreadPool,
-    vulkano::swapchain::{FullScreenExclusive, PresentMode},
-    winit::window::Fullscreen,
+    vulkano::swapchain::PresentMode,
     winit::{event_loop::EventLoop, window::WindowBuilder},
     world::{entity_manager::*, renderer_manager::*, system_manager::*},
     *,

@@ -1,43 +1,15 @@
 use crate::{game_manager::Player, Tag};
 use hex::{
     anyhow,
-    assets::{Shape, Texture},
-    components::{Camera, Trans},
-    nalgebra::{Vector2, Vector4},
     parking_lot::RwLock,
-    vulkano::{
-        command_buffer::{
-            allocator::StandardCommandBufferAllocator, AutoCommandBufferBuilder,
-            CommandBufferUsage, RenderPassBeginInfo,
-        },
-        descriptor_set::allocator::StandardDescriptorSetAllocator,
-        device::{
-            physical::PhysicalDeviceType, Device, DeviceCreateInfo, DeviceExtensions, Queue,
-            QueueCreateInfo, QueueFlags,
-        },
-        format::Format,
-        image::{view::ImageView, Image, ImageCreateInfo, ImageType, ImageUsage},
-        instance::{self, InstanceCreateFlags, InstanceCreateInfo},
-        memory::allocator::{AllocationCreateInfo, StandardMemoryAllocator},
-        pipeline::graphics::viewport::Viewport,
-        render_pass::{Framebuffer, FramebufferCreateInfo, RenderPass},
-        swapchain::{
-            acquire_next_image, PresentMode, Surface, Swapchain, SwapchainCreateInfo,
-            SwapchainPresentInfo,
-        },
-        sync::{self, GpuFuture},
-        Validated, VulkanError, VulkanLibrary,
-    },
     winit::{
-        dpi::PhysicalSize,
         event::{ElementState, Event, KeyEvent, MouseButton, WindowEvent},
         keyboard::{KeyCode, PhysicalKey},
-        window::Fullscreen,
     },
-    world::{entity_manager::EntityManager, system_manager::System, World},
+    world::{system_manager::System, World},
     Context, Control, Id,
 };
-use std::{cell::OnceCell, collections::HashMap, f32::consts::PI, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 #[derive(Eq, PartialEq, Hash)]
 pub enum Input {

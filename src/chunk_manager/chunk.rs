@@ -1,14 +1,12 @@
-use super::CHUNK_SIZE;
 use crate::util;
 use hex::{
     anyhow,
-    assets::{Shape, Texture},
+    assets::Shape,
     nalgebra::{Vector2, Vector4},
     parking_lot::RwLock,
     Context,
 };
 use hex_instance::components::Instance;
-use once_cell::sync::Lazy;
 use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
