@@ -77,21 +77,17 @@ impl ChunkManager {
         format!("{x},{y}.json")
     }
 
-    pub fn gen_chunk(
-        state: Arc<RwLock<State>>,
-        space: Arc<RwLock<Instance>>,
-        tiles: HashMap<String, Arc<Tile>>,
-        pos: Vector2<f32>,
-    ) -> anyhow::Result<ChunkData> {
+    pub fn gen_chunk(&self, pos: Vector2<f32>) -> anyhow::Result<ChunkData> {
         let mut grid = vec![vec![None; CHUNK_SIZE as usize]; CHUNK_SIZE as usize];
-        let mut state = state.write();
+        let mut state = self.state.write();
 
         for (i, grid) in grid.iter_mut().enumerate().take(CHUNK_SIZE as usize) {
             for j in 0..(CHUNK_SIZE as usize) {
                 let x = pos.x as f64 * CHUNK_SIZE as f64 + i as f64;
                 let y = pos.y as f64 * CHUNK_SIZE as f64 + j as f64;
                 let val = state.perlin.get([x / 25.0, y / 25.0, 0.0]);
-                let t: Vec<_> = tiles
+                let t: Vec<_> = self
+                    .tiles
                     .values()
                     .filter_map(|t| {
                         t.check(&mut state.rng, val)
@@ -101,7 +97,7 @@ impl ChunkManager {
                 let (id, _) = t
                     .choose(&mut state.rng)
                     .cloned()
-                    .unwrap_or((None, space.clone()));
+                    .unwrap_or((None, self.space.clone()));
 
                 grid[j] = id.as_ref().cloned();
             }
@@ -114,11 +110,8 @@ impl ChunkManager {
     }
 
     pub fn load_chunk(
+        &self,
         world: Arc<RwLock<World>>,
-        state: Arc<RwLock<State>>,
-        space: Arc<RwLock<Instance>>,
-        loaded: Arc<RwLock<HashSet<(u32, u32)>>>,
-        tiles: HashMap<String, Arc<Tile>>,
         chunk @ (x, y): (u32, u32),
     ) -> anyhow::Result<()> {
         let em = world.read().em.clone();
@@ -134,13 +127,7 @@ impl ChunkManager {
 
                 data
             } else {
-                let data = Self::gen_chunk(
-                    state.clone(),
-                    space.clone(),
-                    tiles.clone(),
-                    Vector2::new(x as f32, y as f32),
-                )
-                .unwrap();
+                let data = self.gen_chunk(Vector2::new(x as f32, y as f32)).unwrap();
                 let content = serde_json::to_string(&data).unwrap();
 
                 fs::write(path, content).unwrap();
@@ -148,7 +135,7 @@ impl ChunkManager {
                 data
             };
 
-            Chunk::load(data, tiles)
+            Chunk::load(data, &self.tiles)
         });
 
         let mut em = em.write();
@@ -160,10 +147,9 @@ impl ChunkManager {
                     (CHUNK_SIZE * y) as f32 + j as f32,
                 );
 
-                if !loaded
-                    .read()
-                    .contains(&(position.x as u32, position.y as u32))
-                {
+                let mut loaded = self.loaded.write();
+
+                if !loaded.contains(&(position.x as u32, position.y as u32)) {
                     let e = em.add(true);
 
                     em.add_component(e, ChunkType::new());
@@ -172,14 +158,12 @@ impl ChunkManager {
                         chunk.grid[i][j]
                             .as_ref()
                             .map(|c| c.instance.clone())
-                            .unwrap_or(space.clone()),
+                            .unwrap_or(self.space.clone()),
                     );
 
                     em.add_component(e, Trans::new(position, 0.0, Vector2::new(1.0, 1.0)));
 
-                    loaded
-                        .write()
-                        .insert((position.x as u32, position.y as u32));
+                    loaded.insert((position.x as u32, position.y as u32));
                 }
             }
         }
@@ -224,13 +208,13 @@ impl System for ChunkManager {
                 {
                     self.last_update_time = now;
 
-                    let player_transform = self.player_transform.as_ref().unwrap().read();
-                    let camera = self.camera.as_ref().unwrap().read();
-                    let player_chunk = Self::chunk_pos(player_transform.position());
-                    let offset_x = (camera.dimensions().x.ceil() / CHUNK_SIZE as f32 * CHUNK_DIST)
-                        .ceil() as u32;
-                    let offset_y = (camera.dimensions().y.ceil() / CHUNK_SIZE as f32 * CHUNK_DIST)
-                        .ceil() as u32;
+                    let player_pos = self.player_transform.as_ref().unwrap().read().position();
+                    let camera_dims = self.camera.as_ref().unwrap().read().dimensions();
+                    let player_chunk = Self::chunk_pos(player_pos);
+                    let offset_x =
+                        (camera_dims.x.ceil() / CHUNK_SIZE as f32 * CHUNK_DIST).ceil() as u32;
+                    let offset_y =
+                        (camera_dims.y.ceil() / CHUNK_SIZE as f32 * CHUNK_DIST).ceil() as u32;
                     let min = (
                         player_chunk
                             .0
@@ -247,64 +231,43 @@ impl System for ChunkManager {
                         (player_chunk.0 + offset_x).min(MAX_CHUNK),
                         (player_chunk.1 + offset_y).min(MAX_CHUNK),
                     );
-                    let world = world.clone();
-                    let state = self.state.clone();
-                    let tiles = self.tiles.clone();
-                    let space = self.space.clone();
-                    let loaded = self.loaded.clone();
-                    let player_transform = self.player_transform.as_ref().unwrap().clone();
-                    let camera = self.camera.as_ref().unwrap().clone();
-                    let pool = context.read().pool.clone();
 
-                    pool.execute(move || {
-                        for i in min.0..max.0 {
-                            for j in min.1..max.1 {
-                                let chunk = (i, j);
+                    for i in min.0..max.0 {
+                        for j in min.1..max.1 {
+                            let chunk = (i, j);
 
-                                Self::load_chunk(
-                                    world.clone(),
-                                    state.clone(),
-                                    space.clone(),
-                                    loaded.clone(),
-                                    tiles.clone(),
-                                    chunk,
-                                )
-                                .unwrap();
-                            }
+                            self.load_chunk(world.clone(), chunk).unwrap();
                         }
+                    }
 
-                        let em = world.read().em.clone();
-                        let player_transform = player_transform.read();
-                        let rm = {
-                            let mut rm = Vec::new();
-                            let em = em.read();
-                            let camera = camera.read();
+                    let em = world.read().em.clone();
+                    let rm = {
+                        let mut rm = Vec::new();
+                        let em = em.read();
+                        let mut loaded = self.loaded.write();
 
-                            for e in em.entities() {
-                                if em.get_component::<ChunkType>(e).is_some() {
-                                    let position =
-                                        em.get_component::<Trans>(e).unwrap().read().position();
-                                    let dist = (player_transform.position() - position).magnitude();
+                        for e in em.entities() {
+                            if em.get_component::<ChunkType>(e).is_some() {
+                                let position =
+                                    em.get_component::<Trans>(e).unwrap().read().position();
+                                let dist = (player_pos - position).magnitude();
 
-                                    if dist >= camera.dimensions().magnitude() * CHUNK_DIST {
-                                        rm.push(e);
+                                if dist >= camera_dims.magnitude() * CHUNK_DIST {
+                                    rm.push(e);
 
-                                        loaded
-                                            .write()
-                                            .remove(&(position.x as u32, position.y as u32));
-                                    }
+                                    loaded.remove(&(position.x as u32, position.y as u32));
                                 }
                             }
-
-                            rm
-                        };
-
-                        let mut em = em.write();
-
-                        for e in rm {
-                            em.rm(e);
                         }
-                    });
+
+                        rm
+                    };
+
+                    let mut em = em.write();
+
+                    for e in rm {
+                        em.rm(e);
+                    }
                 }
             }
         }

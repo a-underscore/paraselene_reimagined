@@ -105,7 +105,7 @@ impl Chunk {
         Ok(Self { position, grid })
     }
 
-    pub fn load(chunk_data: ChunkData, tiles: HashMap<String, Arc<Tile>>) -> Self {
+    pub fn load(chunk_data: ChunkData, tiles: &HashMap<String, Arc<Tile>>) -> Self {
         Self {
             position: chunk_data.position.into(),
             grid: chunk_data

@@ -114,11 +114,7 @@ impl System for GameUiManager {
 
         match event {
             Event::WindowEvent {
-                event: WindowEvent::RedrawRequested,
-                window_id,
-            } if window_id == context.read().window.id() => {}
-            Event::WindowEvent {
-                event: WindowEvent::RedrawRequested,
+                event: WindowEvent::CloseRequested,
                 window_id,
             } if window_id == context.read().window.id() => {
                 control.write().exit = true;

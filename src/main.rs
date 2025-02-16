@@ -35,7 +35,7 @@ fn main() {
         &ev,
         wb,
         PresentMode::Immediate,
-        ThreadPool::new(num_cpus::get()),
+        ThreadPool::new(num_cpus::get() / 2),
         Vector4::new(0.5, 0.5, 0.5, 1.0),
     )
     .unwrap();
@@ -53,10 +53,10 @@ fn main() {
 
     let mut sm = SystemManager::new();
 
-    sm.add(1, PhysicsManager);
-    sm.add(0, GameManager::new());
-    sm.add(0, GameUiManager::new().unwrap());
-    sm.add(0, ChunkManager::new(&context.read(), state).unwrap());
+    sm.add(0, GameManager::new(context.clone(), em.clone()).unwrap());
+    sm.add(1, ChunkManager::new(&context.read(), state).unwrap());
+    sm.add(2, PhysicsManager);
+    sm.add(3, GameUiManager::new().unwrap());
 
     let mut rm = RendererManager::default();
 

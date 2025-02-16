@@ -9,15 +9,14 @@ use hex::{
         dpi::PhysicalSize,
         event::{Event, WindowEvent},
     },
-    world::{system_manager::System, World},
+    world::{system_manager::System, EntityManager, World},
     Context, Control, Id,
 };
 use hex_instance::components::Instance;
 use std::{sync::Arc, time::Instant};
 
 pub const PLAYER_ACCEL: f32 = 0.01;
-pub const DECCEL_MULTIPLIER: f32 = 2.0;
-pub const PLAYER_MAX_SPEED: f32 = 0.5;
+pub const PLAYER_MAX_SPEED: f32 = 10.0;
 
 #[derive(Default)]
 pub struct ButtonStates {
@@ -62,44 +61,21 @@ impl Player {
 }
 
 pub struct GameManager {
-    pub player: Option<Id>,
-    pub camera: Option<Id>,
+    pub player: Id,
+    pub camera: Id,
     pub last_fs: bool,
     pub mouse_position: Vector2<f32>,
     pub dims: (u32, u32),
     pub last_frame: Instant,
 }
 
-impl Default for GameManager {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl GameManager {
-    pub fn new() -> Self {
-        Self {
-            player: Default::default(),
-            camera: Default::default(),
-            last_fs: Default::default(),
-            mouse_position: Default::default(),
-            dims: Default::default(),
-            last_frame: Instant::now(),
-        }
-    }
-}
-
-impl System for GameManager {
-    fn init(
-        &mut self,
+    pub fn new(
         context: Arc<RwLock<Context>>,
-        world: Arc<RwLock<World>>,
-    ) -> anyhow::Result<()> {
-        let em = world.read().em.clone();
+        em: Arc<RwLock<EntityManager>>,
+    ) -> anyhow::Result<Self> {
         let mut em = em.write();
         let player = em.add(true);
-
-        self.player = Some(player);
 
         em.add_component(player, Arc::new(RwLock::new(Player::default())));
         em.add_component(player, Tag::new("player"));
@@ -122,17 +98,24 @@ impl System for GameManager {
         let camera = em.add(true);
 
         em.add_component(camera, Tag::new("camera"));
-        em.add_component(camera, Camera::new(Vector2::new(50.0, 50.0), 1000));
+        em.add_component(camera, Camera::new(Vector2::new(25.0, 25.0), 1000));
         em.add_component(
             camera,
             Trans::new(Vector2::new(0.0, 0.0), 0.0, Vector2::new(1.0, 1.0)),
         );
 
-        self.camera = Some(camera);
-
-        Ok(())
+        Ok(Self {
+            player,
+            camera,
+            last_fs: Default::default(),
+            mouse_position: Default::default(),
+            dims: Default::default(),
+            last_frame: Instant::now(),
+        })
     }
+}
 
+impl System for GameManager {
     fn update(
         &mut self,
         control: Arc<RwLock<Control>>,
@@ -142,12 +125,6 @@ impl System for GameManager {
         let event = control.read().event.clone();
 
         match event {
-            Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                window_id,
-            } if window_id == context.read().window.id() => {
-                control.write().exit = true;
-            }
             Event::WindowEvent {
                 event: WindowEvent::Resized(PhysicalSize { width, height }, ..),
                 window_id,
@@ -166,13 +143,11 @@ impl System for GameManager {
                 event: WindowEvent::RedrawRequested,
                 window_id,
             } if window_id == context.read().window.id() => {
-                let player = self.player.unwrap();
-                let camera_id = self.camera.unwrap();
                 let em = world.read().em.clone();
                 let em = em.read();
-                let camera = em.get_component::<Camera>(camera_id).unwrap();
+                let camera = em.get_component::<Camera>(self.camera).unwrap();
                 let camera = camera.read();
-                let camera_transform = em.get_component::<Trans>(camera_id).unwrap();
+                let camera_transform = em.get_component::<Trans>(self.camera).unwrap();
                 let mut camera_transform = camera_transform.write();
                 let pos = util::mouse_pos_world(
                     camera.dimensions(),
@@ -181,7 +156,7 @@ impl System for GameManager {
                     (self.mouse_position.x as f64, self.mouse_position.y as f64),
                 )
                 .unwrap_or_default();
-                let player_transform = em.get_component::<Trans>(player).unwrap();
+                let player_transform = em.get_component::<Trans>(self.player).unwrap();
                 let player_transform = &mut *player_transform.write();
                 let cross = Vector2::new(0.0, 1.0).perp(&pos);
                 let angle = Vector2::new(0.0, 1.0).angle(&pos);
@@ -189,33 +164,34 @@ impl System for GameManager {
                 let now = Instant::now();
                 let delta = now.duration_since(self.last_frame);
 
+                self.last_frame = now;
+
                 player_transform.set_rotation(angle);
 
-                let player = em.get_component::<Player>(player).unwrap();
+                let player = em.get_component::<Player>(self.player).unwrap();
                 let player = &mut *player.write();
                 let f = player.force();
-                let f = if f.magnitude() != 0.0 {
-                    player.velocity
-                        + (Matrix3::new_rotation(player_transform.rotation())
-                            * util::lerp_vec2(f, Vector2::default(), delta.as_secs_f32()).push(1.0))
+                let f = player.velocity
+                    + if f.magnitude() != 0.0 {
+                        (Matrix3::new_rotation(player_transform.rotation())
+                            * util::lerp_vec2(f, Vector2::default(), 1.0).push(1.0))
                         .xy()
                             * PLAYER_ACCEL
-                } else {
-                    player.velocity
-                        - util::lerp_vec2(player.velocity, Vector2::default(), delta.as_secs_f32())
+                    } else {
+                        -util::lerp_vec2(player.velocity, Vector2::default(), 1.0)
                             * PLAYER_ACCEL
-                            * DECCEL_MULTIPLIER
-                };
+                    };
                 player.velocity = if f.magnitude() != 0.0 {
                     f.normalize() * f.magnitude().min(PLAYER_MAX_SPEED)
                 } else {
                     Vector2::default()
                 };
 
+                println!("{}", player.velocity);
+
                 player_transform.set_position(
                     player_transform.position() + player.velocity * delta.as_secs_f32(),
                 );
-
                 camera_transform.set_position(player_transform.position());
             }
             _ => {}
