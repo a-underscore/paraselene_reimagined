@@ -180,7 +180,8 @@ impl System for GameManager {
                             * PLAYER_ACCEL
                     } else {
                         -util::lerp_vec2(player.velocity, Vector2::default(), 1.0)
-                            * PLAYER_ACCEL * PLAYER_DECCEL_MUL
+                            * PLAYER_ACCEL
+                            * PLAYER_DECCEL_MUL
                     };
                 player.velocity = if f.magnitude() != 0.0 {
                     f.normalize() * f.magnitude().min(PLAYER_MAX_SPEED)
