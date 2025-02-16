@@ -15,8 +15,9 @@ use hex::{
 use hex_instance::components::Instance;
 use std::{sync::Arc, time::Instant};
 
-pub const PLAYER_ACCEL: f32 = 0.01;
+pub const PLAYER_ACCEL: f32 = 0.05;
 pub const PLAYER_MAX_SPEED: f32 = 10.0;
+pub const PLAYER_DECCEL_MUL: f32 = 0.1;
 
 #[derive(Default)]
 pub struct ButtonStates {
@@ -179,15 +180,13 @@ impl System for GameManager {
                             * PLAYER_ACCEL
                     } else {
                         -util::lerp_vec2(player.velocity, Vector2::default(), 1.0)
-                            * PLAYER_ACCEL
+                            * PLAYER_ACCEL * PLAYER_DECCEL_MUL
                     };
                 player.velocity = if f.magnitude() != 0.0 {
                     f.normalize() * f.magnitude().min(PLAYER_MAX_SPEED)
                 } else {
                     Vector2::default()
                 };
-
-                println!("{}", player.velocity);
 
                 player_transform.set_position(
                     player_transform.position() + player.velocity * delta.as_secs_f32(),
