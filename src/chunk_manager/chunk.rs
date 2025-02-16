@@ -16,6 +16,41 @@ pub const ASTEROID_2: &str = "asteroid_2";
 pub const SPACE: &str = "space";
 pub const METAL: &str = "metal";
 
+#[derive(Clone)]
+pub struct Chunk {
+    pub position: Vector2<f32>,
+    pub grid: Vec<Vec<Option<Arc<Tile>>>>,
+}
+
+impl Chunk {
+    pub fn new(position: Vector2<f32>, grid: Vec<Vec<Option<Arc<Tile>>>>) -> anyhow::Result<Self> {
+        Ok(Self { position, grid })
+    }
+
+    pub fn load(chunk_data: ChunkData, tiles: &HashMap<String, Arc<Tile>>) -> Self {
+        Self {
+            position: chunk_data.position.into(),
+            grid: chunk_data
+                .grid
+                .into_iter()
+                .map(|x| {
+                    x.into_iter()
+                        .map(|y| y.and_then(|id| tiles.get(&id).cloned()))
+                        .collect()
+                })
+                .collect(),
+        }
+    }
+}
+
+pub struct ChunkType;
+
+impl ChunkType {
+    pub fn new() -> Arc<RwLock<ChunkType>> {
+        Arc::new(RwLock::new(ChunkType))
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct ChunkData {
     pub position: [f32; 2],
@@ -91,40 +126,5 @@ impl Tile {
             SPACE => Some("art/space.png".into()),
             _ => None,
         }
-    }
-}
-
-#[derive(Clone)]
-pub struct Chunk {
-    pub position: Vector2<f32>,
-    pub grid: Vec<Vec<Option<Arc<Tile>>>>,
-}
-
-impl Chunk {
-    pub fn new(position: Vector2<f32>, grid: Vec<Vec<Option<Arc<Tile>>>>) -> anyhow::Result<Self> {
-        Ok(Self { position, grid })
-    }
-
-    pub fn load(chunk_data: ChunkData, tiles: &HashMap<String, Arc<Tile>>) -> Self {
-        Self {
-            position: chunk_data.position.into(),
-            grid: chunk_data
-                .grid
-                .into_iter()
-                .map(|x| {
-                    x.into_iter()
-                        .map(|y| y.and_then(|id| tiles.get(&id).cloned()))
-                        .collect()
-                })
-                .collect(),
-        }
-    }
-}
-
-pub struct ChunkType;
-
-impl ChunkType {
-    pub fn new() -> Arc<RwLock<ChunkType>> {
-        Arc::new(RwLock::new(ChunkType))
     }
 }

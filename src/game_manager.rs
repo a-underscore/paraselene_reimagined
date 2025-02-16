@@ -19,48 +19,6 @@ pub const PLAYER_ACCEL: f32 = 0.05;
 pub const PLAYER_MAX_SPEED: f32 = 10.0;
 pub const PLAYER_DECCEL_MUL: f32 = 0.1;
 
-#[derive(Default)]
-pub struct ButtonStates {
-    pub forward: bool,
-    pub backward: bool,
-    pub left: bool,
-    pub right: bool,
-}
-
-#[derive(Default)]
-pub struct Player {
-    pub states: ButtonStates,
-    pub velocity: Vector2<f32>,
-}
-
-impl Player {
-    pub fn force(&self) -> Vector2<f32> {
-        let mut force = Vector2::default();
-
-        if self.states.forward {
-            force.y -= 1.0;
-        }
-
-        if self.states.backward {
-            force.y += 1.0;
-        }
-
-        if self.states.left {
-            force.x += 1.0;
-        }
-
-        if self.states.right {
-            force.x -= 1.0;
-        }
-
-        if force.magnitude() > 0.0 {
-            force = force.normalize();
-        }
-
-        force
-    }
-}
-
 pub struct GameManager {
     pub player: Id,
     pub camera: Id,
@@ -198,5 +156,47 @@ impl System for GameManager {
         }
 
         Ok(())
+    }
+}
+
+#[derive(Default)]
+pub struct ButtonStates {
+    pub forward: bool,
+    pub backward: bool,
+    pub left: bool,
+    pub right: bool,
+}
+
+#[derive(Default)]
+pub struct Player {
+    pub states: ButtonStates,
+    pub velocity: Vector2<f32>,
+}
+
+impl Player {
+    pub fn force(&self) -> Vector2<f32> {
+        let mut force = Vector2::default();
+
+        if self.states.forward {
+            force.y -= 1.0;
+        }
+
+        if self.states.backward {
+            force.y += 1.0;
+        }
+
+        if self.states.left {
+            force.x -= 1.0;
+        }
+
+        if self.states.right {
+            force.x -= 1.0;
+        }
+
+        if force.magnitude() > 0.0 {
+            force = force.normalize();
+        }
+
+        force
     }
 }
