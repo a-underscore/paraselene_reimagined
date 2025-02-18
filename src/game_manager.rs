@@ -13,6 +13,7 @@ use hex::{
     Context, Control, Id,
 };
 use hex_instance::components::Instance;
+use hex_physics::components::Collider;
 use std::{sync::Arc, time::Instant};
 
 pub const PLAYER_ACCEL: f32 = 0.05;
@@ -41,6 +42,16 @@ impl GameManager {
         em.add_component(
             player,
             Trans::new(Vector2::new(0.0, 100.0), 0.0, Vector2::new(1.0, 1.0)),
+        );
+        em.add_component(
+            player,
+            Collider::oct(
+                Vector2::new(0.25, 0.25),
+                [0].into(),
+                [].into(),
+                false,
+                false,
+            ),
         );
 
         let shape = Arc::new(Shape::rect(&context.read(), Vector2::new(1.0, 1.0))?);

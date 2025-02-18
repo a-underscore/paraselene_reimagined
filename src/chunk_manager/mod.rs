@@ -13,6 +13,7 @@ use hex::{
     Context, Control,
 };
 use hex_instance::components::Instance;
+use hex_physics::components::Collider;
 use noise::NoiseFn;
 use once_cell::sync::Lazy;
 use rand::prelude::*;
@@ -142,28 +143,40 @@ impl ChunkManager {
 
         for i in 0..(CHUNK_SIZE as usize) {
             for j in 0..(CHUNK_SIZE as usize) {
-                let position = Vector2::new(
-                    (CHUNK_SIZE * x) as f32 + i as f32,
-                    (CHUNK_SIZE * y) as f32 + j as f32,
-                );
-
-                let mut loaded = self.loaded.write();
-
-                if !loaded.contains(&(position.x as u32, position.y as u32)) {
-                    let e = em.add(true);
-
-                    em.add_component(e, ChunkType::new());
-                    em.add_component(
-                        e,
-                        chunk.grid[i][j]
-                            .as_ref()
-                            .map(|c| c.instance.clone())
-                            .unwrap_or(self.space.clone()),
+                if let Some(instance) = chunk.grid[i][j].as_ref().map(|c| c.instance.clone()) {
+                    let position = Vector2::new(
+                        (CHUNK_SIZE * x) as f32 + i as f32,
+                        (CHUNK_SIZE * y) as f32 + j as f32,
                     );
+                    let mut loaded = self.loaded.write();
 
-                    em.add_component(e, Trans::new(position, 0.0, Vector2::new(1.0, 1.0)));
+                    if !loaded.contains(&(position.x as u32, position.y as u32)) {
+                        let e = em.add(true);
 
-                    loaded.insert((position.x as u32, position.y as u32));
+                        em.add_component(e, ChunkType::new());
+                        em.add_component(e, instance);
+
+                        em.add_component(e, Trans::new(position, 0.0, Vector2::new(1.0, 1.0)));
+
+                        if chunk.grid[i][j]
+                            .as_ref()
+                            .map(|t| t.id == METAL)
+                            .unwrap_or(false)
+                        {
+                            em.add_component(
+                                e,
+                                Collider::rect(
+                                    Vector2::new(1.0, 1.0),
+                                    [0, 1].into(),
+                                    [1].into(),
+                                    true,
+                                    false,
+                                ),
+                            );
+                        }
+
+                        loaded.insert((position.x as u32, position.y as u32));
+                    }
                 }
             }
         }
