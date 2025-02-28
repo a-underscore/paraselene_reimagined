@@ -116,6 +116,21 @@ impl System for GameManager {
                 let em = world.read().em.clone();
                 let em = em.read();
                 let camera = em.get_component::<Camera>(self.camera).unwrap();
+                {
+                    let mut camera = camera.write();
+                    let (window_x, window_y) = {
+                        let window_dims_x = self.dims.0 as i32;
+                        let window_dims_y = self.dims.1 as i32;
+                        let asp_ratio = self.dims.0 as f32 / self.dims.1 as f32;
+
+                        (
+                            window_dims_x as f32 / asp_ratio / 50.0,
+                            window_dims_y as f32 / asp_ratio / 50.0,
+                        )
+                    };
+
+                    camera.set_dimensions(Vector2::new(window_x, window_y));
+                }
                 let camera = camera.read();
                 let camera_transform = em.get_component::<Trans>(self.camera).unwrap();
                 let mut camera_transform = camera_transform.write();

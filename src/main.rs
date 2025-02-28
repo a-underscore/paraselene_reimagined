@@ -39,7 +39,6 @@ fn main() {
         Vector4::new(0.5, 0.5, 0.5, 1.0),
     )
     .unwrap();
-
     let state = State::new(rand::thread_rng().gen::<u32>());
     let em = EntityManager::new();
 
