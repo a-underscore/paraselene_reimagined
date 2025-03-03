@@ -14,8 +14,8 @@ edition = "2021"
 [dependencies]
 hashbrown = "0.13.2"
 hex = { git = "https://github.com/a-underscore/hex", branch = "0.3.0" }
-#hex_instance = { git = "https://github.com/a-underscore/hex_instance", branch = "0.3.0" }
-hex_instance = { path = "../hex_instance" }
+hex_instance = { git = "https://github.com/a-underscore/hex_instance", branch = "0.3.0" }
+#hex_instance = { path = "../hex_instance" }
 hex_physics = { git = "https://github.com/a-underscore/hex_physics", branch = "0.3.0" }
 image = "0.25.5"
 nalgebra-glm = "0.18.0"
