@@ -59,7 +59,7 @@ impl GameManager {
             &context.read(),
             shape.clone(),
             Arc::new(util::load_texture(&context.read(), "art/player.png")?),
-            Vector4::new(1.0, 1.0, 0.0, 1.0),
+            Vector4::new(1.0, 1.0, 1.0, 1.0),
             0,
         )?;
 
